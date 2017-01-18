@@ -72,20 +72,26 @@ class DungeonGame (Scene):
 		# Player physics variables
 		self.xVel = 0
 		self.yVel = 0
+		
 		# Joystick origin variables
 		self.x = 0
 		self.y = 0
+		
 		# Movement
 		self.xMove = 0
 		self.yMove = 0
+		
 		# Animation
 		self.animCounter = 0
+		self.playerCooldown = 0
+		self.playerAttackVar = 0
 		
 		# Player direction
 		self.playerDirection = "side"
 		
 		# Decide if the player is attacking
 		self.playerAttacking = False
+		
 		# The joystick isn't being used, so we tell the program to return a false boolean
 		self.usingJoystick = False
 		
@@ -130,7 +136,12 @@ class DungeonGame (Scene):
 			self.joystickKnob.position = (0, 0)
 			self.x = 0
 			self.y = 0
-	
+			
+		# Reset the cooldown
+		if self.playerCooldown > 0:
+			self.playerAttacking = True
+			self.playerCooldown -= 1
+			
 	def touch_began(self, touch):
 		x, y = touch.location
 			
@@ -147,9 +158,9 @@ class DungeonGame (Scene):
 			
 			# Tell the program the joystick is being used
 			self.usingJoystick = True
-		else:
-			# Player attack animation
-			self.playerAttacking = True
+		
+		elif self.playerCooldown <= 0: # If a touch is detected elsewhere and self.playerCooldown <= 0...
+			self.playerCooldown = 10
 	
 	def touch_moved(self, touch):
 		x, y = touch.location
@@ -193,8 +204,6 @@ class DungeonGame (Scene):
 		# Used to later remove the joystick in 'remove_joystick(self)''
 		if x < self.size.w / JOYSTICK_AREA and y < self.size.h:
 			self.usingJoystick = False
-		else:
-			self.playerAttacking = False
 			
 	def setup_floor(self):
 		# Create an empty Node to contain floor SpriteNodes
@@ -437,92 +446,75 @@ class DungeonGame (Scene):
 		elif  self.yVel < 0:
 			self.playerDirection = "down"
 		
-		# Attacking animation
+		''' Attacking animation '''
 		if self.playerAttacking == True:
+			
 			if self.playerDirection == "side":
-				
+					
 				if self.animCounter < len(PLAYER0_RIGHT_ATTACK_VAR0):
 					self.player.texture = Texture(PLAYER0_RIGHT_ATTACK_VAR0[int(self.animCounter)])
 					self.animCounter += ANIM_SPEED
-				
-				elif self.animCounter >= len(PLAYER0_RIGHT_ATTACK_VAR0):
-					self.animCounter = 0
 			
 			elif self.playerDirection == "up":
 				
 				if self.animCounter < len(PLAYER0_UP_ATTACK_VAR0):
 					self.player.texture = Texture(PLAYER0_UP_ATTACK_VAR0[int(self.animCounter)])
 					self.animCounter += ANIM_SPEED
-				
-				elif self.animCounter >= len(PLAYER0_UP_ATTACK_VAR0):
-					self.animCounter = 0
 			
 			elif self.playerDirection == "down":
 				
 				if self.animCounter < len(PLAYER0_DOWN_ATTACK_VAR0):
 					self.player.texture = Texture(PLAYER0_DOWN_ATTACK_VAR0[int(self.animCounter)])
 					self.animCounter += ANIM_SPEED
-				
-				elif self.animCounter >= len(PLAYER0_DOWN_ATTACK_VAR0):
-					self.animCounter = 0
+					
+			if self.animCounter >= len(PLAYER0_RIGHT_ATTACK_VAR0):
+				self.playerAttacking = False
+				self.animCounter = -1
 		
+		''' Player idle animation '''
 		if self.playerAttacking == False:
-			# Player idle animation
+			
+			if self.animCounter >= len(PLAYER0_UP_IDLE):
+					self.animCounter = 0
+			
 			if self.xVel == 0 and self.yVel == 0:
+				
 				if self.playerDirection == "up":
 					
 					if self.animCounter < len(PLAYER0_UP_IDLE):
 						self.player.texture = Texture(PLAYER0_UP_IDLE[int(self.animCounter)])
 						self.animCounter += ANIM_SPEED
-					
-					elif self.animCounter >= len(PLAYER0_UP_IDLE):
-						self.animCounter = 0
 				
 				elif self.playerDirection == "down":
 					
 					if self.animCounter < len(PLAYER0_DOWN_IDLE):
 						self.player.texture = Texture(PLAYER0_DOWN_IDLE[int(self.animCounter)])
 						self.animCounter += ANIM_SPEED
-					
-					elif self.animCounter >= len(PLAYER0_DOWN_IDLE):
-						self.animCounter = 0
 				
 				elif self.playerDirection == "side":
 					
 					if self.animCounter < len(PLAYER0_RIGHT_IDLE):
 						self.player.texture = Texture(PLAYER0_RIGHT_IDLE[int(self.animCounter)])
 						self.animCounter += ANIM_SPEED
-					
-					elif self.animCounter >= len(PLAYER0_RIGHT_IDLE):
-						self.animCounter = 0
 						
-			# Player movement animation
+			''' Player movement animation '''
 			if self.playerDirection == "side" and self.xVel != 0:
 				
 				if self.animCounter < len(PLAYER0_RIGHT_MOVE):
 					self.player.texture = Texture(PLAYER0_RIGHT_MOVE[int(self.animCounter)])
 					self.animCounter += ANIM_SPEED
-				
-				elif self.animCounter >= len(PLAYER0_RIGHT_MOVE):
-					self.animCounter = 0
 			
 			elif self.playerDirection == "up" and self.yVel != 0:
 				
 				if self.animCounter < len(PLAYER0_UP_MOVE):
 					self.player.texture = Texture(PLAYER0_UP_MOVE[int(self.animCounter)])
 					self.animCounter += ANIM_SPEED
-				
-				elif self.animCounter >= len(PLAYER0_UP_MOVE):
-					self.animCounter = 0
 			
 			elif self.playerDirection == "down" and self.yVel != 0:
 				
 				if self.animCounter < len(PLAYER0_DOWN_MOVE):
 					self.player.texture = Texture(PLAYER0_DOWN_MOVE[int(self.animCounter)])
 					self.animCounter += ANIM_SPEED
-				
-				elif self.animCounter >= len(PLAYER0_DOWN_MOVE):
-					self.animCounter = 0
 
 if __name__ == '__main__':
 	run(DungeonGame(), show_fps=True, orientation=LANDSCAPE)
