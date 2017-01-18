@@ -14,6 +14,8 @@ todo (No order):
 	- create health bar
 	- create basic enemies
 	- create doors~
+	- add sound effects
+	
 * Completed
 ~ Partially completed
 """
@@ -63,29 +65,29 @@ class DungeonGame (Scene):
 			pickle.dump(store, file)
 		
 		with open('dungeon.pickle', 'r') as file:
-			asd = pickle.load(file)
-			print(asd[2]) <<<--- This will print (2, 4)
+			load = pickle.load(file)
+			print(load[2]) <<<--- This will print (2, 4)
 		'''
 		
 		# Player physics variables
-		self.x_vel = 0
-		self.y_vel = 0
+		self.xVel = 0
+		self.yVel = 0
 		# Joystick origin variables
 		self.x = 0
 		self.y = 0
 		# Movement
-		self.x_move = 0
-		self.y_move = 0
+		self.xMove = 0
+		self.yMove = 0
 		# Animation
-		self.anim_counter = 0
+		self.animCounter = 0
 		
 		# Player direction
-		self.player_direction = "side"
+		self.playerDirection = "side"
 		
 		# Decide if the player is attacking
-		self.player_attacking = False
+		self.playerAttacking = False
 		# The joystick isn't being used, so we tell the program to return a false boolean
-		self.using_joystick = False
+		self.usingJoystick = False
 		
 		# Create background
 		self.setup_floor()
@@ -97,19 +99,19 @@ class DungeonGame (Scene):
 		self.add_child(self.player)
 		
 		# Shows the player's hitbox outline
-		self.player_hitbox_test = SpriteNode(texture=('assets/outline.png'), anchor_point=(0,0), size=(TILE_SIZE, TILE_SIZE/2))
-		self.add_child(self.player_hitbox_test)
+		self.playerHitboxTest = SpriteNode(texture=('assets/outline.png'), anchor_point=(0,0), size=(TILE_SIZE, TILE_SIZE/2))
+		self.add_child(self.playerHitboxTest)
 		
 		# Create the joystick base and knob
-		self.joystickbase = SpriteNode(color=BUTTON_COLOUR, alpha=BUTTON_ALPHA, size=(self.size.h / 4, self.size.h / 4))
-		self.joystickknob = SpriteNode(color=BUTTON_COLOUR, alpha=BUTTON_ALPHA, size=(self.size.h / (4 * 4), self.size.h / (4 * 4)))
+		self.joystickBase = SpriteNode(color=BUTTON_COLOUR, alpha=BUTTON_ALPHA, size=(self.size.h / 4, self.size.h / 4))
+		self.joystickKnob = SpriteNode(color=BUTTON_COLOUR, alpha=BUTTON_ALPHA, size=(self.size.h / (4 * 4), self.size.h / (4 * 4)))
 		
 		'''
 		# Create buttons
-		self.button_a = SpriteNode(color=BUTTON_COLOUR, alpha=BUTTON_ALPHA)
-		self.button_a.size = (self.size.h / 12, self.size.h / 12)
-		self.button_a.position = (self.size.w / 1.2, self.size.h / 5)
-		self.add_child(self.button_a)
+		self.buttonA = SpriteNode(color=BUTTON_COLOUR, alpha=BUTTON_ALPHA)
+		self.buttonA.size = (self.size.h / 12, self.size.h / 12)
+		self.buttonA.position = (self.size.w / 1.2, self.size.h / 5)
+		self.add_child(self.buttonA)
 		'''
 	
 	def update(self):
@@ -118,14 +120,14 @@ class DungeonGame (Scene):
 		self.player_texture()
 		
 		# Updates player hitbox outline
-		self.player_hitbox_test.position = (self.player_hitbox.x,self.player_hitbox.y)
+		self.playerHitboxTest.position = (self.playerHitbox.x,self.playerHitbox.y)
 		
 		# If the joystick isn't being used, remove it
-		if self.using_joystick == False:
-			self.joystickbase.remove_from_parent()
-			self.joystickknob.remove_from_parent()
+		if self.usingJoystick == False:
+			self.joystickBase.remove_from_parent()
+			self.joystickKnob.remove_from_parent()
 			# Reset variables
-			self.joystickknob.position = (0, 0)
+			self.joystickKnob.position = (0, 0)
 			self.x = 0
 			self.y = 0
 	
@@ -138,16 +140,16 @@ class DungeonGame (Scene):
 			# Create a new variable to use the quadrant value
 			self.x, self.y = x, y
 			''' Create the joystick at the new position '''
-			self.joystickbase.position = (self.x, self.y)
-			self.add_child(self.joystickbase)
-			self.joystickknob.position = (self.x, self.y)
-			self.add_child(self.joystickknob)
+			self.joystickBase.position = (self.x, self.y)
+			self.add_child(self.joystickBase)
+			self.joystickKnob.position = (self.x, self.y)
+			self.add_child(self.joystickKnob)
 			
 			# Tell the program the joystick is being used
-			self.using_joystick = True
+			self.usingJoystick = True
 		else:
 			# Player attack animation
-			self.player_attacking = True
+			self.playerAttacking = True
 	
 	def touch_moved(self, touch):
 		x, y = touch.location
@@ -155,34 +157,34 @@ class DungeonGame (Scene):
 		""" Move joystick knob """
 		# If the touched location is inside the bottom-left quadrant...
 		if x < self.size.w / JOYSTICK_AREA and y < self.size.h / JOYSTICK_AREA:
-			x_moved, y_moved = x, y # Only allows certain coordinates to pass
+			xMoved, yMoved = x, y # Only allows certain coordinates to pass
 			
 			''' if the touch has moved past the right side joystick base limit... '''
-			if x_moved > self.x + self.size.h / KNOB_RESTRICTION:
+			if xMoved > self.x + self.size.h / KNOB_RESTRICTION:
 				# Set the knob's x-coordinate to the right side joystick base limit
-				knob_x = self.x + self.size.h / KNOB_RESTRICTION
+				knobX = self.x + self.size.h / KNOB_RESTRICTION
 				''' else if the touch has moved past the left side joystick base limit... '''
-			elif x_moved < self.x - self.size.h / KNOB_RESTRICTION:
+			elif xMoved < self.x - self.size.h / KNOB_RESTRICTION:
 				# Set the knob's x-coordinate to the left side joystick base limit
-				knob_x = self.x - self.size.h / KNOB_RESTRICTION
+				knobX = self.x - self.size.h / KNOB_RESTRICTION
 				''' else keep it where it is (which is inside the horizontal joystick base limits) '''
 			else:
-				knob_x = x_moved
+				knobX = xMoved
 			
 			''' if the touch has moved past the top joystick base limit... '''
-			if y_moved > self.y + self.size.h / KNOB_RESTRICTION:
+			if yMoved > self.y + self.size.h / KNOB_RESTRICTION:
 				# Set the knob's y-coordinate to the top joystick base limit
-				knob_y = self.y + self.size.h / KNOB_RESTRICTION
+				knobY = self.y + self.size.h / KNOB_RESTRICTION
 				''' if the touch has moved past the bottom joystick base limit... '''
-			elif y_moved < self.y - self.size.h / KNOB_RESTRICTION:
+			elif yMoved < self.y - self.size.h / KNOB_RESTRICTION:
 				# Set the knob's y-coordinate to the bottom joystick base limit
-				knob_y = self.y - self.size.h / KNOB_RESTRICTION
+				knobY = self.y - self.size.h / KNOB_RESTRICTION
 				''' else keep it where it is (which is inside the vertical joystick base limits) '''
 			else:
-				knob_y = y_moved
+				knobY = yMoved
 			
 			# Set the joystick position to the previous calculations
-			self.joystickknob.position = (knob_x, knob_y)
+			self.joystickKnob.position = (knobX, knobY)
 				
 	def touch_ended(self, touch):
 		x, y = touch.location
@@ -190,9 +192,9 @@ class DungeonGame (Scene):
 		# If the player stops touching inside the left half of the screen, tell the program the joystick isn't being used
 		# Used to later remove the joystick in 'remove_joystick(self)''
 		if x < self.size.w / JOYSTICK_AREA and y < self.size.h:
-			self.using_joystick = False
+			self.usingJoystick = False
 		else:
-			self.player_attacking = False
+			self.playerAttacking = False
 			
 	def setup_floor(self):
 		# Create an empty Node to contain floor SpriteNodes
@@ -200,7 +202,7 @@ class DungeonGame (Scene):
 		# Place floor
 		for x in range(int(self.size.w / TILE_SIZE)):
 			for y in range(int(self.size.h / TILE_SIZE)):
-				floor = SpriteNode(texture=FLOOR, position=(x*TILE_SIZE+TILE_SIZE/2,y*TILE_SIZE+TILE_SIZE/2))
+				floor = SpriteNode(texture=FLOOR, position=(x * TILE_SIZE + TILE_SIZE / 2, y * TILE_SIZE + TILE_SIZE / 2))
 				self.floors.add_child(floor)
 				y += 1
 			x += 1
@@ -208,268 +210,319 @@ class DungeonGame (Scene):
 	def setup_walls(self):
 		''' North wall '''
 		# Create an empty Node to contain north wall SpriteNodes
-		self.wall_north = Node(parent=self)
-		self.walls_north = []
+		self.wallNorth = Node(parent=self)
+		self.wallsNorth = []
 		# Place north outer walls
 		for x in range(int(self.size.w / TILE_SIZE)):
-			wall_side = SpriteNode(texture=(WALL_SIDE))
-			wall_side.rotation = 3.14
-			wall_side.position = (TILE_SIZE * (x + 0.5), self.size.h - TILE_SIZE / 2)
-			self.wall_north.add_child(wall_side)
-			self.walls_north.append(wall_side)
+			wallSide = SpriteNode(texture=(WALL_SIDE))
+			wallSide.rotation = 3.14
+			wallSide.position = (TILE_SIZE * (x + 0.5), self.size.h - TILE_SIZE / 2)
+			self.wallNorth.add_child(wallSide)
+			self.wallsNorth.append(wallSide)
 			x += 1
 		
 		''' South wall '''
 		# Create an empty Node to contain south wall SpriteNodes
-		self.wall_south = Node(parent=self)
+		self.wallSouth = Node(parent=self)
 		# Place south walls
 		for x in range(int(self.size.w / TILE_SIZE)):
-			wall_side = SpriteNode(texture=(WALL_SIDE))
-			wall_side.position = (TILE_SIZE * (x + 0.5), TILE_SIZE / 2)
-			self.wall_south.add_child(wall_side)
+			wallSide = SpriteNode(texture=(WALL_SIDE))
+			wallSide.position = (TILE_SIZE * (x + 0.5), TILE_SIZE / 2)
+			self.wallSouth.add_child(wallSide)
 			x += 1
 		
 		''' East wall '''
 		# Create an empty Node to contain east wall SpriteNodes
-		self.wall_east = Node(parent=self)
+		self.wallEast = Node(parent=self)
 		# Place east walls
 		for y in range(int(self.size.h / TILE_SIZE)):
-			wall_side = SpriteNode(texture=(WALL_SIDE))
-			wall_side.rotation = 1.57
-			wall_side.position = (self.size.w - TILE_SIZE / 2, TILE_SIZE * (y + 0.5))
-			self.wall_east.add_child(wall_side)
+			wallSide = SpriteNode(texture=(WALL_SIDE))
+			wallSide.rotation = 1.57
+			wallSide.position = (self.size.w - TILE_SIZE / 2, TILE_SIZE * (y + 0.5))
+			self.wallEast.add_child(wallSide)
 			y += 1
 		
 		''' West wall '''
 		# Create an empty Node to contain west wall SpriteNodes
-		self.wall_west = Node(parent=self)
+		self.wallWest = Node(parent=self)
 		# Place west walls
 		for y in range(int(self.size.h / TILE_SIZE)):
-			wall_side = SpriteNode(texture=(WALL_SIDE))
-			wall_side.rotation = -1.57
-			wall_side.position = (TILE_SIZE / 2, TILE_SIZE * (y + 0.5))
-			self.wall_west.add_child(wall_side)
+			wallSide = SpriteNode(texture=(WALL_SIDE))
+			wallSide.rotation = -1.57
+			wallSide.position = (TILE_SIZE / 2, TILE_SIZE * (y + 0.5))
+			self.wallWest.add_child(wallSide)
 			y += 1
 			
 		''' Corner walls '''
 		# Create an empty Node to contain corner wall SpriteNodes
-		self.wall_corners = Node(parent=self)
+		self.wallCorners = Node(parent=self)
 		
 		# Bottom-left corner
-		wall_corner = SpriteNode(texture=WALL_CORNER)
-		wall_corner.position = (TILE_SIZE / 2, TILE_SIZE / 2)
-		self.wall_corners.add_child(wall_corner)
+		wallCorner = SpriteNode(texture=WALL_CORNER)
+		wallCorner.position = (TILE_SIZE / 2, TILE_SIZE / 2)
+		self.wallCorners.add_child(wallCorner)
 		
 		# Bottom-right corner
-		wall_corner = SpriteNode(texture=WALL_CORNER)
-		wall_corner.position = (self.size.w - TILE_SIZE / 2, TILE_SIZE / 2)
-		wall_corner.rotation = 1.57
-		self.wall_corners.add_child(wall_corner)
+		wallCorner = SpriteNode(texture=WALL_CORNER)
+		wallCorner.position = (self.size.w - TILE_SIZE / 2, TILE_SIZE / 2)
+		wallCorner.rotation = 1.57
+		self.wallCorners.add_child(wallCorner)
 		
 		# Top-left corner
-		wall_corner = SpriteNode(texture=WALL_CORNER)
-		wall_corner.position = (TILE_SIZE / 2, self.size.h - TILE_SIZE / 2)
-		wall_corner.rotation = 1.57
-		self.wall_corners.add_child(wall_corner)
+		wallCorner = SpriteNode(texture=WALL_CORNER)
+		wallCorner.position = (TILE_SIZE / 2, self.size.h - TILE_SIZE / 2)
+		wallCorner.rotation = 1.57
+		self.wallCorners.add_child(wallCorner)
 		
 		# Top-right corner
-		wall_corner = SpriteNode(texture=WALL_CORNER)
-		wall_corner.position = (self.size.w - TILE_SIZE / 2, self.size.h - TILE_SIZE / 2)
-		self.wall_corners.add_child(wall_corner)
+		wallCorner = SpriteNode(texture=WALL_CORNER)
+		wallCorner.position = (self.size.w - TILE_SIZE / 2, self.size.h - TILE_SIZE / 2)
+		self.wallCorners.add_child(wallCorner)
 		
 	def player_physics(self):
-		self.player.position = (self.player.position.x + self.x_vel, self.player.position.y + self.y_vel)
-		self.player_hitbox = Rect(self.player.position.x - self.player.size.w / 2, self.player.position.y - self.player.size.h / 2, TILE_SIZE, TILE_SIZE/2)
+		self.player.position = (self.player.position.x + self.xVel, self.player.position.y + self.yVel)
+		self.playerHitbox = Rect(self.player.position.x - self.player.size.w / 2, self.player.position.y - self.player.size.h / 2, TILE_SIZE, TILE_SIZE/2)
 		
 		# Set x movement limit	
-		if self.x_vel > MAX_SPEED:
-			self.x_vel = MAX_SPEED
-		elif self.x_vel < -MAX_SPEED:
-			self.x_vel = -MAX_SPEED
+		if self.xVel > MAX_SPEED:
+			self.xVel = MAX_SPEED
+		
+		elif self.xVel < -MAX_SPEED:
+			self.xVel = -MAX_SPEED
 		
 		# Set y movement limit
-		if self.y_vel > MAX_SPEED:
-			self.y_vel = MAX_SPEED
-		elif self.y_vel < -MAX_SPEED:
-			self.y_vel = -MAX_SPEED
+		if self.yVel > MAX_SPEED:
+			self.yVel = MAX_SPEED
+		
+		elif self.yVel < -MAX_SPEED:
+			self.yVel = -MAX_SPEED
 		
 		# Prevent speed boost from diagonal movement
-		if abs(self.x_move) == abs(self.y_move):
-			self.x_vel += (math.sqrt(self.x_move**2 + self.y_move**2) / 2) * self.x_move
-			self.y_vel += (math.sqrt(self.x_move**2 + self.y_move**2) / 2) * self.y_move
+		if abs(self.xMove) == abs(self.yMove):
+			self.xVel += (math.sqrt(self.xMove**2 + self.yMove**2) / 2) * self.xMove
+			self.yVel += (math.sqrt(self.xMove**2 + self.yMove**2) / 2) * self.yMove
+		
 		else:
-			self.x_vel += self.x_move
-			self.y_vel += self.y_move
+			self.xVel += self.xMove
+			self.yVel += self.yMove
 		
 		# Friction
-		if self.player_hitbox.intersects(self.floors.bbox):
-			self.x_vel -= 0.1 * self.x_vel
-			self.y_vel -= 0.1 * self.y_vel
+		if self.playerHitbox.intersects(self.floors.bbox):
+			self.xVel -= 0.1 * self.xVel
+			self.yVel -= 0.1 * self.yVel
 		
 		# Set velocity to zero when going slow enough
-		if self.x_vel < 0.1 and self.x_vel > -0.1:
-			self.x_vel = 0
-		if self.y_vel < 0.1 and self.y_vel > -0.1:
-			self.y_vel = 0
+		if self.xVel < 0.1 and self.xVel > -0.1:
+			self.xVel = 0
+		
+		if self.yVel < 0.1 and self.yVel > -0.1:
+			self.yVel = 0
 		
 		# Collision for north wall
-		if self.player_hitbox.y + self.player_hitbox.h > self.size.h - TILE_SIZE:
-			if self.player_hitbox.x < 6.5 * TILE_SIZE:
+		if self.playerHitbox.y + self.playerHitbox.h > self.size.h - TILE_SIZE:
+			
+			if self.playerHitbox.x < 6.5 * TILE_SIZE:
 				self.player.position = (self.player.position.x, self.player.position.y - 1)
-				self.y_vel = 0
-			if self.player_hitbox.x > 8.5 * TILE_SIZE:
+				self.yVel = 0
+			
+			if self.playerHitbox.x > 8.5 * TILE_SIZE:
 				self.player.position = (self.player.position.x, self.player.position.y - 1)
-				self.y_vel = 0
-			if self.player_hitbox.x < 7 * TILE_SIZE:
+				self.yVel = 0
+			
+			if self.playerHitbox.x < 7 * TILE_SIZE:
 				self.player.position = (self.player.position.x + 1, self.player.position.y)
-				self.x_vel = 0
-			if self.player_hitbox.x > 8 * TILE_SIZE:
+				self.xVel = 0
+			
+			if self.playerHitbox.x > 8 * TILE_SIZE:
 				self.player.position = (self.player.position.x - 1, self.player.position.y)
-				self.x_vel = 0
+				self.xVel = 0
 			
 			
 		# Collision for south wall
-		if self.player_hitbox.y < TILE_SIZE:
-			if self.player_hitbox.x < 6.5 * TILE_SIZE:
+		if self.playerHitbox.y < TILE_SIZE:
+			
+			if self.playerHitbox.x < 6.5 * TILE_SIZE:
 				self.player.position = (self.player.position.x, self.player.position.y + 1)
-				self.y_vel = 0
-			if self.player_hitbox.x > 8.5 * TILE_SIZE:
+				self.yVel = 0
+			
+			if self.playerHitbox.x > 8.5 * TILE_SIZE:
 				self.player.position = (self.player.position.x, self.player.position.y + 1)
-				self.y_vel = 0
-			if self.player_hitbox.x < 7 * TILE_SIZE:
+				self.yVel = 0
+			
+			if self.playerHitbox.x < 7 * TILE_SIZE:
 				self.player.position = (self.player.position.x + 1, self.player.position.y)
-				self.x_vel = 0
-			if self.player_hitbox.x > 8 * TILE_SIZE:
+				self.xVel = 0
+			
+			if self.playerHitbox.x > 8 * TILE_SIZE:
 				self.player.position = (self.player.position.x - 1, self.player.position.y)
-				self.x_vel = 0
+				self.xVel = 0
 		
 		# Collision for east wall
-		if self.player_hitbox.x + self.player_hitbox.w > self.size.w - TILE_SIZE:
-			if self.player_hitbox.y < 4.5 * TILE_SIZE:
+		if self.playerHitbox.x + self.playerHitbox.w > self.size.w - TILE_SIZE:
+			
+			if self.playerHitbox.y < 4.5 * TILE_SIZE:
 				self.player.position = (self.player.position.x - 1, self.player.position.y)
-				self.x_vel = 0
-			if self.player_hitbox.y > 6.5 * TILE_SIZE:
+				self.xVel = 0
+			
+			if self.playerHitbox.y > 6.5 * TILE_SIZE:
 				self.player.position = (self.player.position.x - 1, self.player.position.y)
-				self.x_vel = 0
-			if self.player_hitbox.y < 5 * TILE_SIZE:
+				self.xVel = 0
+			
+			if self.playerHitbox.y < 5 * TILE_SIZE:
 				self.player.position = (self.player.position.x, self.player.position.y + 1)
-				self.y_vel = 0
-			if self.player_hitbox.y > 6 * TILE_SIZE:
+				self.yVel = 0
+			
+			if self.playerHitbox.y > 6 * TILE_SIZE:
 				self.player.position = (self.player.position.x, self.player.position.y - 1)
-				self.y_vel = 0
+				self.yVel = 0
 		
 		# Collision for west wall
-		if self.player_hitbox.x < TILE_SIZE:
-			if self.player_hitbox.y < 4.5 * TILE_SIZE:
+		if self.playerHitbox.x < TILE_SIZE:
+			
+			if self.playerHitbox.y < 4.5 * TILE_SIZE:
 				self.player.position = (self.player.position.x + 1, self.player.position.y)
-				self.x_vel = 0
-			if self.player_hitbox.y > 6.5 * TILE_SIZE:
+				self.xVel = 0
+			
+			if self.playerHitbox.y > 6.5 * TILE_SIZE:
 				self.player.position = (self.player.position.x + 1, self.player.position.y)
-				self.x_vel = 0
-			if self.player_hitbox.y < 5 * TILE_SIZE:
+				self.xVel = 0
+			
+			if self.playerHitbox.y < 5 * TILE_SIZE:
 				self.player.position = (self.player.position.x, self.player.position.y + 1)
-				self.y_vel = 0
-			if self.player_hitbox.y > 6 * TILE_SIZE:
+				self.yVel = 0
+			
+			if self.playerHitbox.y > 6 * TILE_SIZE:
 				self.player.position = (self.player.position.x, self.player.position.y - 1)
-				self.y_vel = 0
+				self.yVel = 0
 	
 	def player_input(self):
-		x_difference = int(self.joystickknob.position.x - self.x)
-		y_difference = int(self.joystickknob.position.y - self.y)
+		xDifference = int(self.joystickKnob.position.x - self.x)
+		yDifference = int(self.joystickKnob.position.y - self.y)
 		
 		# Move left and right
-		if x_difference > KNOB_DEADZONE:
-			self.x_move = 1
-		elif x_difference < -KNOB_DEADZONE:
-			self.x_move = -1
+		if xDifference > KNOB_DEADZONE:
+			self.xMove = 1
+		
+		elif xDifference < -KNOB_DEADZONE:
+			self.xMove = -1
+		
 		else:
-			self.x_move = 0
+			self.xMove = 0
 		
 		# Move up and down
-		if y_difference > KNOB_DEADZONE:
-			self.y_move = 1
-		elif y_difference < -KNOB_DEADZONE:
-			self.y_move = -1
+		if yDifference > KNOB_DEADZONE:
+			self.yMove = 1
+		
+		elif yDifference < -KNOB_DEADZONE:
+			self.yMove = -1
+		
 		else:
-			self.y_move = 0
+			self.yMove = 0
 		
 	def player_texture(self):
 		# Flip image when going left and right
-		if self.x_vel > 0:
+		if self.xVel > 0:
 			self.player.x_scale = 1
-		elif self.x_vel < 0:
+		
+		elif self.xVel < 0:
 			self.player.x_scale = -1
 		
 		# Determine the direction of the player		
-		if abs(self.x_vel) > abs(self.y_vel):
-			self.player_direction = "side"
-		elif self.y_vel > 0:
-			self.player_direction = "up"
-		elif  self.y_vel < 0:
-			self.player_direction = "down"
+		if abs(self.xVel) > abs(self.yVel):
+			self.playerDirection = "side"
+		
+		elif self.yVel > 0:
+			self.playerDirection = "up"
+		
+		elif  self.yVel < 0:
+			self.playerDirection = "down"
 		
 		# Attacking animation
-		if self.player_attacking == True:
-			if self.player_direction == "side":
-				if self.anim_counter < len(PLAYER0_RIGHT_ATTACK_VAR0):
-					self.player.texture = Texture(PLAYER0_RIGHT_ATTACK_VAR0[int(self.anim_counter)])
-					self.anim_counter += ANIM_SPEED
-				elif self.anim_counter >= len(PLAYER0_RIGHT_ATTACK_VAR0):
-					self.anim_counter = 0
-			elif self.player_direction == "up":
-				if self.anim_counter < len(PLAYER0_UP_ATTACK_VAR0):
-					self.player.texture = Texture(PLAYER0_UP_ATTACK_VAR0[int(self.anim_counter)])
-					self.anim_counter += ANIM_SPEED
-				elif self.anim_counter >= len(PLAYER0_UP_ATTACK_VAR0):
-					self.anim_counter = 0
-			elif self.player_direction == "down":
-				if self.anim_counter < len(PLAYER0_DOWN_ATTACK_VAR0):
-					self.player.texture = Texture(PLAYER0_DOWN_ATTACK_VAR0[int(self.anim_counter)])
-					self.anim_counter += ANIM_SPEED
-				elif self.anim_counter >= len(PLAYER0_DOWN_ATTACK_VAR0):
-					self.anim_counter = 0
+		if self.playerAttacking == True:
+			if self.playerDirection == "side":
+				
+				if self.animCounter < len(PLAYER0_RIGHT_ATTACK_VAR0):
+					self.player.texture = Texture(PLAYER0_RIGHT_ATTACK_VAR0[int(self.animCounter)])
+					self.animCounter += ANIM_SPEED
+				
+				elif self.animCounter >= len(PLAYER0_RIGHT_ATTACK_VAR0):
+					self.animCounter = 0
+			
+			elif self.playerDirection == "up":
+				
+				if self.animCounter < len(PLAYER0_UP_ATTACK_VAR0):
+					self.player.texture = Texture(PLAYER0_UP_ATTACK_VAR0[int(self.animCounter)])
+					self.animCounter += ANIM_SPEED
+				
+				elif self.animCounter >= len(PLAYER0_UP_ATTACK_VAR0):
+					self.animCounter = 0
+			
+			elif self.playerDirection == "down":
+				
+				if self.animCounter < len(PLAYER0_DOWN_ATTACK_VAR0):
+					self.player.texture = Texture(PLAYER0_DOWN_ATTACK_VAR0[int(self.animCounter)])
+					self.animCounter += ANIM_SPEED
+				
+				elif self.animCounter >= len(PLAYER0_DOWN_ATTACK_VAR0):
+					self.animCounter = 0
 		
-		if self.player_attacking == False:
+		if self.playerAttacking == False:
 			# Player idle animation
-			if self.x_vel == 0 and self.y_vel == 0:
-				if self.player_direction == "up":
-					if self.anim_counter < len(PLAYER0_UP_IDLE):
-						self.player.texture = Texture(PLAYER0_UP_IDLE[int(self.anim_counter)])
-						self.anim_counter += ANIM_SPEED
-					elif self.anim_counter >= len(PLAYER0_UP_IDLE):
-						self.anim_counter = 0
-				elif self.player_direction == "down":
-					if self.anim_counter < len(PLAYER0_DOWN_IDLE):
-						self.player.texture = Texture(PLAYER0_DOWN_IDLE[int(self.anim_counter)])
-						self.anim_counter += ANIM_SPEED
-					elif self.anim_counter >= len(PLAYER0_DOWN_IDLE):
-						self.anim_counter = 0
-				elif self.player_direction == "side":
-					if self.anim_counter < len(PLAYER0_RIGHT_IDLE):
-						self.player.texture = Texture(PLAYER0_RIGHT_IDLE[int(self.anim_counter)])
-						self.anim_counter += ANIM_SPEED
-					elif self.anim_counter >= len(PLAYER0_RIGHT_IDLE):
-						self.anim_counter = 0
+			if self.xVel == 0 and self.yVel == 0:
+				if self.playerDirection == "up":
+					
+					if self.animCounter < len(PLAYER0_UP_IDLE):
+						self.player.texture = Texture(PLAYER0_UP_IDLE[int(self.animCounter)])
+						self.animCounter += ANIM_SPEED
+					
+					elif self.animCounter >= len(PLAYER0_UP_IDLE):
+						self.animCounter = 0
+				
+				elif self.playerDirection == "down":
+					
+					if self.animCounter < len(PLAYER0_DOWN_IDLE):
+						self.player.texture = Texture(PLAYER0_DOWN_IDLE[int(self.animCounter)])
+						self.animCounter += ANIM_SPEED
+					
+					elif self.animCounter >= len(PLAYER0_DOWN_IDLE):
+						self.animCounter = 0
+				
+				elif self.playerDirection == "side":
+					
+					if self.animCounter < len(PLAYER0_RIGHT_IDLE):
+						self.player.texture = Texture(PLAYER0_RIGHT_IDLE[int(self.animCounter)])
+						self.animCounter += ANIM_SPEED
+					
+					elif self.animCounter >= len(PLAYER0_RIGHT_IDLE):
+						self.animCounter = 0
 						
 			# Player movement animation
-			if self.player_direction == "side" and self.x_vel != 0:
-				if self.anim_counter < len(PLAYER0_RIGHT_MOVE):
-					self.player.texture = Texture(PLAYER0_RIGHT_MOVE[int(self.anim_counter)])
-					self.anim_counter += ANIM_SPEED
-				elif self.anim_counter >= len(PLAYER0_RIGHT_MOVE):
-					self.anim_counter = 0
-			elif self.player_direction == "up" and self.y_vel != 0:
-				if self.anim_counter < len(PLAYER0_UP_MOVE):
-					self.player.texture = Texture(PLAYER0_UP_MOVE[int(self.anim_counter)])
-					self.anim_counter += ANIM_SPEED
-				elif self.anim_counter >= len(PLAYER0_UP_MOVE):
-					self.anim_counter = 0
-			elif self.player_direction == "down" and self.y_vel != 0:
-				if self.anim_counter < len(PLAYER0_DOWN_MOVE):
-					self.player.texture = Texture(PLAYER0_DOWN_MOVE[int(self.anim_counter)])
-					self.anim_counter += ANIM_SPEED
-				elif self.anim_counter >= len(PLAYER0_DOWN_MOVE):
-					self.anim_counter = 0
+			if self.playerDirection == "side" and self.xVel != 0:
+				
+				if self.animCounter < len(PLAYER0_RIGHT_MOVE):
+					self.player.texture = Texture(PLAYER0_RIGHT_MOVE[int(self.animCounter)])
+					self.animCounter += ANIM_SPEED
+				
+				elif self.animCounter >= len(PLAYER0_RIGHT_MOVE):
+					self.animCounter = 0
+			
+			elif self.playerDirection == "up" and self.yVel != 0:
+				
+				if self.animCounter < len(PLAYER0_UP_MOVE):
+					self.player.texture = Texture(PLAYER0_UP_MOVE[int(self.animCounter)])
+					self.animCounter += ANIM_SPEED
+				
+				elif self.animCounter >= len(PLAYER0_UP_MOVE):
+					self.animCounter = 0
+			
+			elif self.playerDirection == "down" and self.yVel != 0:
+				
+				if self.animCounter < len(PLAYER0_DOWN_MOVE):
+					self.player.texture = Texture(PLAYER0_DOWN_MOVE[int(self.animCounter)])
+					self.animCounter += ANIM_SPEED
+				
+				elif self.animCounter >= len(PLAYER0_DOWN_MOVE):
+					self.animCounter = 0
 
 if __name__ == '__main__':
 	run(DungeonGame(), show_fps=True, orientation=LANDSCAPE)
