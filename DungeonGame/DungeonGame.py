@@ -46,12 +46,9 @@ PLAYER0_UP_MOVE = ['assets/player0_up_move0.png', 'assets/player0_up_move1.png',
 PLAYER0_DOWN_MOVE = ['assets/player0_down_move0.png', 'assets/player0_down_move1.png', 'assets/player0_down_move2.png', 'assets/player0_down_move3.png']
 
 # Attacking animations
-PLAYER0_RIGHT_ATTACK_VAR0 = ['assets/player0_right_attack0_var0.png']
-PLAYER0_RIGHT_ATTACK_VAR1 = ['assets/player0_right_attack0_var1.png']
-PLAYER0_UP_ATTACK_VAR0 = ['assets/player0_up_attack0_var0.png']
-PLAYER0_UP_ATTACK_VAR1 = ['assets/player0_up_attack0_var1.png']
-PLAYER0_DOWN_ATTACK_VAR0 = ['assets/player0_down_attack0_var0.png']
-PLAYER0_DOWN_ATTACK_VAR1 = ['assets/player0_down_attack0_var1.png']
+PLAYER0_RIGHT_ATTACK = [['assets/player0_right_attack0_var0.png'], ['assets/player0_right_attack0_var1.png']]
+PLAYER0_UP_ATTACK = [['assets/player0_up_attack0_var0.png'], ['assets/player0_up_attack0_var1.png']]
+PLAYER0_DOWN_ATTACK = [['assets/player0_down_attack0_var0.png'], ['assets/player0_down_attack0_var1.png']]
 
 class DungeonGame (Scene):
 	def setup(self):
@@ -83,7 +80,7 @@ class DungeonGame (Scene):
 		
 		# Animation
 		self.animCounter = 0
-		self.playerCooldown = 0
+		self.playerCooldown = 0.0
 		self.playerAttackVar = 0
 		
 		# Player direction
@@ -160,7 +157,7 @@ class DungeonGame (Scene):
 			self.usingJoystick = True
 		
 		elif self.playerCooldown <= 0: # If a touch is detected elsewhere and self.playerCooldown <= 0...
-			self.playerCooldown = 10
+			self.playerCooldown = 5
 	
 	def touch_moved(self, touch):
 		x, y = touch.location
@@ -294,17 +291,17 @@ class DungeonGame (Scene):
 		
 		# Set x movement limit	
 		if self.xVel > MAX_SPEED:
-			self.xVel = MAX_SPEED
+			self.xVel = MAX_SPEED - self.playerCooldown
 		
 		elif self.xVel < -MAX_SPEED:
-			self.xVel = -MAX_SPEED
+			self.xVel = -MAX_SPEED + self.playerCooldown
 		
 		# Set y movement limit
 		if self.yVel > MAX_SPEED:
-			self.yVel = MAX_SPEED
+			self.yVel = MAX_SPEED - self.playerCooldown
 		
 		elif self.yVel < -MAX_SPEED:
-			self.yVel = -MAX_SPEED
+			self.yVel = -MAX_SPEED + self.playerCooldown
 		
 		# Prevent speed boost from diagonal movement
 		if abs(self.xMove) == abs(self.yMove):
@@ -451,23 +448,23 @@ class DungeonGame (Scene):
 			
 			if self.playerDirection == "side":
 					
-				if self.animCounter < len(PLAYER0_RIGHT_ATTACK_VAR0):
-					self.player.texture = Texture(PLAYER0_RIGHT_ATTACK_VAR0[int(self.animCounter)])
+				if self.animCounter < len(PLAYER0_RIGHT_ATTACK[0]):
+					self.player.texture = Texture(PLAYER0_RIGHT_ATTACK[0][int(self.animCounter)])
 					self.animCounter += ANIM_SPEED
 			
 			elif self.playerDirection == "up":
 				
-				if self.animCounter < len(PLAYER0_UP_ATTACK_VAR0):
-					self.player.texture = Texture(PLAYER0_UP_ATTACK_VAR0[int(self.animCounter)])
+				if self.animCounter < len(PLAYER0_UP_ATTACK[0]):
+					self.player.texture = Texture(PLAYER0_UP_ATTACK[0][int(self.animCounter)])
 					self.animCounter += ANIM_SPEED
 			
 			elif self.playerDirection == "down":
 				
-				if self.animCounter < len(PLAYER0_DOWN_ATTACK_VAR0):
-					self.player.texture = Texture(PLAYER0_DOWN_ATTACK_VAR0[int(self.animCounter)])
+				if self.animCounter < len(PLAYER0_DOWN_ATTACK[0]):
+					self.player.texture = Texture(PLAYER0_DOWN_ATTACK[0][int(self.animCounter)])
 					self.animCounter += ANIM_SPEED
 					
-			if self.animCounter >= len(PLAYER0_RIGHT_ATTACK_VAR0):
+			if self.animCounter >= len(PLAYER0_RIGHT_ATTACK[0]):
 				self.playerAttacking = False
 				self.animCounter = -1
 		
