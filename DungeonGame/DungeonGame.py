@@ -2,6 +2,7 @@
 
 from scene import *
 import math
+import random
 import pickle
 
 """
@@ -53,17 +54,16 @@ PLAYER0_DOWN_ATTACK = [['assets/player0_down_attack0_var0.png'], ['assets/player
 class DungeonGame (Scene):
 	def setup(self):
 		
+		# Just playing around with pickling, left the code for future reference (saving game, etc.)
 		'''
-		Just played around with pickling, left the code for future reference (saving files, etc.)
-		
 		store = ['Yo wattup', 3, (2, 4)]
 		
 		with open('dungeon.pickle', 'w') as file:
 			pickle.dump(store, file)
 		
 		with open('dungeon.pickle', 'r') as file:
-			load = pickle.load(file)
-			print(load[2]) <<<--- This will print (2, 4)
+			store = pickle.load(file)
+			print(store[2]) # >>> (2, 4
 		'''
 		
 		# Player physics variables
@@ -81,7 +81,7 @@ class DungeonGame (Scene):
 		# Animation
 		self.animCounter = 0
 		self.playerCooldown = 0.0
-		self.playerAttackVar = 0
+		self.playerAttackVar = 0.0
 		
 		# Player direction
 		self.playerDirection = "side"
@@ -134,7 +134,7 @@ class DungeonGame (Scene):
 			self.x = 0
 			self.y = 0
 			
-		# Reset the cooldown
+		# Reset player cooldown
 		if self.playerCooldown > 0:
 			self.playerAttacking = True
 			self.playerCooldown -= 1
@@ -156,8 +156,13 @@ class DungeonGame (Scene):
 			# Tell the program the joystick is being used
 			self.usingJoystick = True
 		
-		elif self.playerCooldown <= 0: # If a touch is detected elsewhere and self.playerCooldown <= 0...
+		# If a touch is detected elsewhere and self.playerCooldown <= 0 a player must be attacking
+		elif self.playerCooldown <= 0:
 			self.playerCooldown = 5
+			self.playerAttackVar += 1
+			
+			if self.playerAttackVar > len(PLAYER0_RIGHT_ATTACK) - 1:
+				self.playerAttackVar = 0
 	
 	def touch_moved(self, touch):
 		x, y = touch.location
@@ -286,8 +291,11 @@ class DungeonGame (Scene):
 		self.wallCorners.add_child(wallCorner)
 		
 	def player_physics(self):
+		# Player pos
 		self.player.position = (self.player.position.x + self.xVel, self.player.position.y + self.yVel)
+		# Hitbox pos
 		self.playerHitbox = Rect(self.player.position.x - self.player.size.w / 2, self.player.position.y - self.player.size.h / 2, TILE_SIZE, TILE_SIZE/2)
+		
 		
 		# Set x movement limit	
 		if self.xVel > MAX_SPEED:
@@ -296,14 +304,16 @@ class DungeonGame (Scene):
 		elif self.xVel < -MAX_SPEED:
 			self.xVel = -MAX_SPEED + self.playerCooldown
 		
+		
 		# Set y movement limit
 		if self.yVel > MAX_SPEED:
 			self.yVel = MAX_SPEED - self.playerCooldown
 		
 		elif self.yVel < -MAX_SPEED:
 			self.yVel = -MAX_SPEED + self.playerCooldown
+			
 		
-		# Prevent speed boost from diagonal movement
+		# Prevent speed boost from diagonal movement using Pythagoras' Theorem
 		if abs(self.xMove) == abs(self.yMove):
 			self.xVel += (math.sqrt(self.xMove**2 + self.yMove**2) / 2) * self.xMove
 			self.yVel += (math.sqrt(self.xMove**2 + self.yMove**2) / 2) * self.yMove
@@ -311,11 +321,13 @@ class DungeonGame (Scene):
 		else:
 			self.xVel += self.xMove
 			self.yVel += self.yMove
+			
 		
 		# Friction
 		if self.playerHitbox.intersects(self.floors.bbox):
 			self.xVel -= 0.1 * self.xVel
 			self.yVel -= 0.1 * self.yVel
+			
 		
 		# Set velocity to zero when going slow enough
 		if self.xVel < 0.1 and self.xVel > -0.1:
@@ -323,6 +335,7 @@ class DungeonGame (Scene):
 		
 		if self.yVel < 0.1 and self.yVel > -0.1:
 			self.yVel = 0
+			
 		
 		# Collision for north wall
 		if self.playerHitbox.y + self.playerHitbox.h > self.size.h - TILE_SIZE:
@@ -363,6 +376,7 @@ class DungeonGame (Scene):
 				self.player.position = (self.player.position.x - 1, self.player.position.y)
 				self.xVel = 0
 		
+		
 		# Collision for east wall
 		if self.playerHitbox.x + self.playerHitbox.w > self.size.w - TILE_SIZE:
 			
@@ -381,6 +395,7 @@ class DungeonGame (Scene):
 			if self.playerHitbox.y > 6 * TILE_SIZE:
 				self.player.position = (self.player.position.x, self.player.position.y - 1)
 				self.yVel = 0
+		
 		
 		# Collision for west wall
 		if self.playerHitbox.x < TILE_SIZE:
@@ -402,26 +417,24 @@ class DungeonGame (Scene):
 				self.yVel = 0
 	
 	def player_input(self):
+		# Calculates the distance from the area touched and the origin (self.joystickKnob.position.*)
 		xDifference = int(self.joystickKnob.position.x - self.x)
 		yDifference = int(self.joystickKnob.position.y - self.y)
 		
-		# Move left and right
+		# Move player left and right if the knob is outside the deadzone
+		# The deadzone allows the player to stop moving even if they aren't exactly at origin
 		if xDifference > KNOB_DEADZONE:
 			self.xMove = 1
-		
 		elif xDifference < -KNOB_DEADZONE:
 			self.xMove = -1
-		
 		else:
 			self.xMove = 0
 		
-		# Move up and down
+		# Move up and down if the knob is outside the deadzone
 		if yDifference > KNOB_DEADZONE:
 			self.yMove = 1
-		
 		elif yDifference < -KNOB_DEADZONE:
 			self.yMove = -1
-		
 		else:
 			self.yMove = 0
 		
@@ -429,48 +442,49 @@ class DungeonGame (Scene):
 		# Flip image when going left and right
 		if self.xVel > 0:
 			self.player.x_scale = 1
-		
 		elif self.xVel < 0:
 			self.player.x_scale = -1
 		
 		# Determine the direction of the player		
 		if abs(self.xVel) > abs(self.yVel):
 			self.playerDirection = "side"
-		
 		elif self.yVel > 0:
 			self.playerDirection = "up"
-		
 		elif  self.yVel < 0:
 			self.playerDirection = "down"
 		
 		''' Attacking animation '''
 		if self.playerAttacking == True:
 			
+			# Play attack animation for appropriate direction
+			
 			if self.playerDirection == "side":
 					
-				if self.animCounter < len(PLAYER0_RIGHT_ATTACK[0]):
-					self.player.texture = Texture(PLAYER0_RIGHT_ATTACK[0][int(self.animCounter)])
+				if self.animCounter < len(PLAYER0_RIGHT_ATTACK[int(self.playerAttackVar)]):
+					self.player.texture = Texture(PLAYER0_RIGHT_ATTACK[int(self.playerAttackVar)][int(self.animCounter)])
 					self.animCounter += ANIM_SPEED
 			
 			elif self.playerDirection == "up":
 				
-				if self.animCounter < len(PLAYER0_UP_ATTACK[0]):
-					self.player.texture = Texture(PLAYER0_UP_ATTACK[0][int(self.animCounter)])
+				if self.animCounter < len(PLAYER0_UP_ATTACK[int(self.playerAttackVar)]):
+					self.player.texture = Texture(PLAYER0_UP_ATTACK[int(self.playerAttackVar)][int(self.animCounter)])
 					self.animCounter += ANIM_SPEED
 			
 			elif self.playerDirection == "down":
 				
-				if self.animCounter < len(PLAYER0_DOWN_ATTACK[0]):
-					self.player.texture = Texture(PLAYER0_DOWN_ATTACK[0][int(self.animCounter)])
+				if self.animCounter < len(PLAYER0_DOWN_ATTACK[int(self.playerAttackVar)]):
+					self.player.texture = Texture(PLAYER0_DOWN_ATTACK[int(self.playerAttackVar)][int(self.animCounter)])
 					self.animCounter += ANIM_SPEED
-					
-			if self.animCounter >= len(PLAYER0_RIGHT_ATTACK[0]):
+			
+			# ... else reset the variables		
+			if self.animCounter >= len(PLAYER0_RIGHT_ATTACK[int(self.playerAttackVar)]):
 				self.playerAttacking = False
 				self.animCounter = -1
 		
 		''' Player idle animation '''
 		if self.playerAttacking == False:
 			
+			# If the animCounter is too big for PLAYER0_UP_IDLE, reset animCounter
 			if self.animCounter >= len(PLAYER0_UP_IDLE):
 					self.animCounter = 0
 			
