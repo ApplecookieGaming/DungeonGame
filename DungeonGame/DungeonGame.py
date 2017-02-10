@@ -29,6 +29,11 @@ KNOB_DEADZONE = 20 # Create a deadzone so controls aren't too sensitive
 TILE_SIZE = 64 # The size for tiles
 MAX_SPEED = 5 # Max speed the player can go
 
+NORTH_ROTATION = 3.14
+SOUTH_ROTATION = 0
+EAST_ROTATION = 1.57
+WEST_ROTATION = -EAST_ROTATION
+
 ANIM_SPEED = 0.2 # Controls animation speed (higher = faster)
 
 
@@ -230,7 +235,7 @@ class DungeonGame (Scene):
 		# Place north outer walls
 		for x in range(int(self.size.w / TILE_SIZE)):
 			wallSide = SpriteNode(texture=(WALL_SIDE))
-			wallSide.rotation = 3.14
+			wallSide.rotation = NORTH_ROTATION
 			wallSide.position = (TILE_SIZE * (x + 0.5), self.size.h - TILE_SIZE / 2)
 			self.wallNorth.add_child(wallSide)
 			self.wallsNorth.append(wallSide)
@@ -252,7 +257,7 @@ class DungeonGame (Scene):
 		# Place east walls
 		for y in range(int(self.size.h / TILE_SIZE)):
 			wallSide = SpriteNode(texture=(WALL_SIDE))
-			wallSide.rotation = 1.57
+			wallSide.rotation = EAST_ROTATION
 			wallSide.position = (self.size.w - TILE_SIZE / 2, TILE_SIZE * (y + 0.5))
 			self.wallEast.add_child(wallSide)
 			y += 1
@@ -263,7 +268,7 @@ class DungeonGame (Scene):
 		# Place west walls
 		for y in range(int(self.size.h / TILE_SIZE)):
 			wallSide = SpriteNode(texture=(WALL_SIDE))
-			wallSide.rotation = -1.57
+			wallSide.rotation = WEST_ROTATION
 			wallSide.position = (TILE_SIZE / 2, TILE_SIZE * (y + 0.5))
 			self.wallWest.add_child(wallSide)
 			y += 1
@@ -280,13 +285,13 @@ class DungeonGame (Scene):
 		# Bottom-right corner
 		wallCorner = SpriteNode(texture=WALL_CORNER)
 		wallCorner.position = (self.size.w - TILE_SIZE / 2, TILE_SIZE / 2)
-		wallCorner.rotation = 1.57
+		wallCorner.rotation = EAST_ROTATION
 		self.wallCorners.add_child(wallCorner)
 		
 		# Top-left corner
 		wallCorner = SpriteNode(texture=WALL_CORNER)
 		wallCorner.position = (TILE_SIZE / 2, self.size.h - TILE_SIZE / 2)
-		wallCorner.rotation = 1.57
+		wallCorner.rotation = EAST_ROTATION
 		self.wallCorners.add_child(wallCorner)
 		
 		# Top-right corner
@@ -301,14 +306,14 @@ class DungeonGame (Scene):
 		# Left north door
 		self.doorNorth1 = SpriteNode(texture=DOOR_CLOSED)
 		self.doorNorth1.position = (TILE_SIZE * 7.5, self.size.h - TILE_SIZE / 2)
-		self.doorNorth1.rotation = 3.14
+		self.doorNorth1.rotation = NORTH_ROTATION
 		self.doorNorth1.x_scale = -1
 		self.doors.add_child(self.doorNorth1)
 		
 		# Right north door
 		self.doorNorth2 = SpriteNode(texture=DOOR_CLOSED)
 		self.doorNorth2.position = (TILE_SIZE * 8.5, self.size.h - TILE_SIZE / 2)
-		self.doorNorth2.rotation = 3.14
+		self.doorNorth2.rotation = NORTH_ROTATION
 		self.doors.add_child(self.doorNorth2)
 		
 		''' South doors '''
@@ -327,13 +332,13 @@ class DungeonGame (Scene):
 		# Left east door
 		self.doorEast1 = SpriteNode(texture=DOOR_CLOSED)
 		self.doorEast1.position = (self.size.w - TILE_SIZE / 2, TILE_SIZE * 5.5)
-		self.doorEast1.rotation = 1.57
+		self.doorEast1.rotation = EAST_ROTATION
 		self.doors.add_child(self.doorEast1)
 		
 		# Right east door
 		self.doorEast2 = SpriteNode(texture=DOOR_CLOSED)
 		self.doorEast2.position = (self.size.w - TILE_SIZE / 2, TILE_SIZE * 6.5)
-		self.doorEast2.rotation = 1.57
+		self.doorEast2.rotation = EAST_ROTATION
 		self.doorEast2.x_scale = -1
 		self.doors.add_child(self.doorEast2)
 		
@@ -341,14 +346,14 @@ class DungeonGame (Scene):
 		# Left west door
 		self.doorWest1 = SpriteNode(texture=DOOR_CLOSED)
 		self.doorWest1.position = (TILE_SIZE / 2, TILE_SIZE * 5.5)
-		self.doorWest1.rotation = -1.57
+		self.doorWest1.rotation = WEST_ROTATION
 		self.doorWest1.x_scale = -1
 		self.doors.add_child(self.doorWest1)
 		
 		# Right west door
 		self.doorWest2 = SpriteNode(texture=DOOR_CLOSED)
 		self.doorWest2.position = (TILE_SIZE / 2, TILE_SIZE * 6.5)
-		self.doorWest2.rotation = -1.57
+		self.doorWest2.rotation = WEST_ROTATION
 		self.doors.add_child(self.doorWest2)
 		
 	def player_physics(self):
