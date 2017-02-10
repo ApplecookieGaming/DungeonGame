@@ -11,7 +11,7 @@ todo (No order):
 	- create player moved by joystick (and other physics)*
 	- create walls*
 	- create idling and walking animations*
-	- create attack animations~
+	- create attack animations*
 	- create health bar
 	- create basic enemies
 	- create doors~
@@ -21,8 +21,8 @@ todo (No order):
 ~ Partially completed
 """
 
-BUTTON_COLOUR = '#000000'
-BUTTON_ALPHA = 0.2
+BUTTON_COLOUR = '#000000' # Colour of buttons
+BUTTON_ALPHA = 0.2 # Button transparency
 JOYSTICK_AREA = 2 # Area where the joystick can spawn, the larger the number, the smaller the area
 KNOB_RESTRICTION = 11 # How far the knob can move away from its origin
 KNOB_DEADZONE = 20 # Create a deadzone so controls aren't too sensitive
@@ -31,10 +31,13 @@ MAX_SPEED = 5 # Max speed the player can go
 
 ANIM_SPEED = 0.2 # Controls animation speed (higher = faster)
 
+
 ## Images
 FLOOR = 'assets/floor.png'
 WALL_SIDE = 'assets/wall_side.png'
 WALL_CORNER = 'assets/wall_corner.png'
+DOOR_CLOSED = 'assets/door_closed.png'
+DOOR_OPEN = 'assets/door_open.png'
 
 # Idle animations
 PLAYER0_RIGHT_IDLE = ['assets/player0_right_idle0.png', 'assets/player0_right_idle1.png', 'assets/player0_right_idle2.png', 'assets/player0_right_idle3.png']
@@ -92,9 +95,10 @@ class DungeonGame (Scene):
 		# The joystick isn't being used, so we tell the program to return a false boolean
 		self.usingJoystick = False
 		
-		# Create background
-		self.setup_floor()
-		self.setup_walls()
+		# Create enviroment
+		self.draw_floor()
+		self.draw_walls()
+		self.draw_doors()
 		
 		# Create player
 		self.player = SpriteNode(PLAYER0_RIGHT_IDLE[0])
@@ -207,7 +211,7 @@ class DungeonGame (Scene):
 		if x < self.size.w / JOYSTICK_AREA and y < self.size.h:
 			self.usingJoystick = False
 			
-	def setup_floor(self):
+	def draw_floor(self):
 		# Create an empty Node to contain floor SpriteNodes
 		self.floors = Node(parent=self)
 		# Place floor
@@ -218,7 +222,7 @@ class DungeonGame (Scene):
 				y += 1
 			x += 1
 	
-	def setup_walls(self):
+	def draw_walls(self):
 		''' North wall '''
 		# Create an empty Node to contain north wall SpriteNodes
 		self.wallNorth = Node(parent=self)
@@ -289,6 +293,63 @@ class DungeonGame (Scene):
 		wallCorner = SpriteNode(texture=WALL_CORNER)
 		wallCorner.position = (self.size.w - TILE_SIZE / 2, self.size.h - TILE_SIZE / 2)
 		self.wallCorners.add_child(wallCorner)
+	
+	def draw_doors(self):
+		self.doors = Node(parent=self)
+		
+		''' North doors '''
+		# Left north door
+		self.doorNorth1 = SpriteNode(texture=DOOR_CLOSED)
+		self.doorNorth1.position = (TILE_SIZE * 7.5, self.size.h - TILE_SIZE / 2)
+		self.doorNorth1.rotation = 3.14
+		self.doorNorth1.x_scale = -1
+		self.doors.add_child(self.doorNorth1)
+		
+		# Right north door
+		self.doorNorth2 = SpriteNode(texture=DOOR_CLOSED)
+		self.doorNorth2.position = (TILE_SIZE * 8.5, self.size.h - TILE_SIZE / 2)
+		self.doorNorth2.rotation = 3.14
+		self.doors.add_child(self.doorNorth2)
+		
+		''' South doors '''
+		# Left south door
+		self.doorSouth1 = SpriteNode(texture=DOOR_CLOSED)
+		self.doorSouth1.position = (TILE_SIZE * (7.5), TILE_SIZE / 2)
+		self.doors.add_child(self.doorSouth1)
+		
+		# Right south door
+		self.doorSouth2 = SpriteNode(texture=DOOR_CLOSED)
+		self.doorSouth2.position = (TILE_SIZE * (8.5), TILE_SIZE / 2)
+		self.doorSouth2.x_scale = -1
+		self.doors.add_child(self.doorSouth2)
+		
+		''' East doors '''
+		# Left east door
+		self.doorEast1 = SpriteNode(texture=DOOR_CLOSED)
+		self.doorEast1.position = (self.size.w - TILE_SIZE / 2, TILE_SIZE * 5.5)
+		self.doorEast1.rotation = 1.57
+		self.doors.add_child(self.doorEast1)
+		
+		# Right east door
+		self.doorEast2 = SpriteNode(texture=DOOR_CLOSED)
+		self.doorEast2.position = (self.size.w - TILE_SIZE / 2, TILE_SIZE * 6.5)
+		self.doorEast2.rotation = 1.57
+		self.doorEast2.x_scale = -1
+		self.doors.add_child(self.doorEast2)
+		
+		''' West doors '''
+		# Left west door
+		self.doorWest1 = SpriteNode(texture=DOOR_CLOSED)
+		self.doorWest1.position = (TILE_SIZE / 2, TILE_SIZE * 5.5)
+		self.doorWest1.rotation = -1.57
+		self.doorWest1.x_scale = -1
+		self.doors.add_child(self.doorWest1)
+		
+		# Right west door
+		self.doorWest2 = SpriteNode(texture=DOOR_CLOSED)
+		self.doorWest2.position = (TILE_SIZE / 2, TILE_SIZE * 6.5)
+		self.doorWest2.rotation = -1.57
+		self.doors.add_child(self.doorWest2)
 		
 	def player_physics(self):
 		# Player pos
