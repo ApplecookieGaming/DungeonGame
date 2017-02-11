@@ -1,4 +1,4 @@
-# Friday 2nd December 2016
+# Saturday 11th February 2017
 
 from scene import *
 import math
@@ -110,10 +110,6 @@ class DungeonGame (Scene):
 		self.player.position = self.size.w / 2, self.size.h / 2
 		self.add_child(self.player)
 		
-		# Shows the player's hitbox outline
-		self.playerHitboxTest = SpriteNode(texture=('assets/outline.png'), anchor_point=(0,0), size=(TILE_SIZE, TILE_SIZE/2))
-		self.add_child(self.playerHitboxTest)
-		
 		# Create the joystick base and knob
 		self.joystickBase = SpriteNode(color=BUTTON_COLOUR, alpha=BUTTON_ALPHA, size=(self.size.h / 4, self.size.h / 4))
 		self.joystickKnob = SpriteNode(color=BUTTON_COLOUR, alpha=BUTTON_ALPHA, size=(self.size.h / (4 * 4), self.size.h / (4 * 4)))
@@ -130,9 +126,6 @@ class DungeonGame (Scene):
 		self.player_physics()
 		self.player_input()
 		self.player_texture()
-		
-		# Updates player hitbox outline
-		self.playerHitboxTest.position = (self.playerHitbox.x,self.playerHitbox.y)
 		
 		# If the joystick isn't being used, remove it
 		if self.usingJoystick == False:
