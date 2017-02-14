@@ -1,41 +1,42 @@
 # Saturday 11th February 2017
 
 from scene import *
+from enum import Enum
+from enum import IntEnum
 import math
-import random
 import pickle
 
 """
 todo (No order):
 	- create joystick*
 	- create player moved by joystick (and other physics)*
-	- create walls*
-	- create idling and walking animations*
+	- create walls~
+	- create idling and walking animations
 	- create attack animations*
 	- create health bar
 	- create basic enemies
-	- create doors~
+	- create doors
 	- add sound effects
 	
 * Completed
 ~ Partially completed
 """
 
-BUTTON_COLOUR = '#000000' # Colour of buttons
+BUTTON_COLOUR = '#ffffff' # Colour of buttons
 BUTTON_ALPHA = 0.2 # Button transparency
+JOYSTICK_SIZE = 128
 JOYSTICK_AREA = 2 # Area where the joystick can spawn, the larger the number, the smaller the area
 KNOB_RESTRICTION = 11 # How far the knob can move away from its origin
 KNOB_DEADZONE = 20 # Create a deadzone so controls aren't too sensitive
-TILE_SIZE = 64 # The size for tiles
+TILE_SIZE = 32 # The size for tiles
 MAX_SPEED = 5 # Max speed the player can go
 
-NORTH_ROTATION = 3.14
-SOUTH_ROTATION = 0
-EAST_ROTATION = 1.57
-WEST_ROTATION = -EAST_ROTATION
+FLOOR_X = 2
+FLOOR_Y = 7
+FLOOR_W = 28
+FLOOR_H = 15
 
 ANIM_SPEED = 0.2 # Controls animation speed (higher = faster)
-
 
 ## Images
 FLOOR = 'assets/floor.png'
@@ -59,6 +60,22 @@ PLAYER0_RIGHT_ATTACK = [['assets/player0_right_attack0_var0.png'], ['assets/play
 PLAYER0_UP_ATTACK = [['assets/player0_up_attack0_var0.png'], ['assets/player0_up_attack0_var1.png']]
 PLAYER0_DOWN_ATTACK = [['assets/player0_down_attack0_var0.png'], ['assets/player0_down_attack0_var1.png']]
 
+class Tile (Enum):
+	TILE_BASE = 0
+	TILE_WALL_SIDE = 1
+
+class TileFacing (IntEnum):
+	UP = 000
+	DOWN = 314
+	LEFT = -157
+	RIGHT = 157
+	
+class PlayerFacing (Enum):
+	LEFT = 0
+	RIGHT = 1
+	UP = 2
+	DOWN = 3
+
 class DungeonGame (Scene):
 	def setup(self):
 		
@@ -73,6 +90,9 @@ class DungeonGame (Scene):
 			store = pickle.load(file)
 			print(store[2]) # >>> (2, 4
 		'''
+		
+		self.floors = []
+		self.walls = []
 		
 		# Player physics variables
 		self.xVel = 0
@@ -91,28 +111,28 @@ class DungeonGame (Scene):
 		self.playerCooldown = 0.0
 		self.playerAttackVar = 0.0
 		
-		# Player direction
-		self.playerDirection = "side"
+		self.background_color = '#000000'
 		
-		# Decide if the player is attacking
+		# Player Facing
+		PlayerFacing.RIGHT
+		
+		# Return true if the player is attacking
 		self.playerAttacking = False
 		
 		# The joystick isn't being used, so we tell the program to return a false boolean
 		self.usingJoystick = False
 		
-		# Create enviroment
-		self.draw_floor()
-		self.draw_walls()
-		self.draw_doors()
-		
 		# Create player
 		self.player = SpriteNode(PLAYER0_RIGHT_IDLE[0])
-		self.player.position = self.size.w / 2, self.size.h / 2
+		self.player.position = (self.size.w / 2, self.size.h / 2)
 		self.add_child(self.player)
 		
 		# Create the joystick base and knob
-		self.joystickBase = SpriteNode(color=BUTTON_COLOUR, alpha=BUTTON_ALPHA, size=(self.size.h / 4, self.size.h / 4))
-		self.joystickKnob = SpriteNode(color=BUTTON_COLOUR, alpha=BUTTON_ALPHA, size=(self.size.h / (4 * 4), self.size.h / (4 * 4)))
+		self.joystickBase = SpriteNode(color=BUTTON_COLOUR, alpha=BUTTON_ALPHA, size=(JOYSTICK_SIZE, JOYSTICK_SIZE))
+		
+		self.joystickKnob = SpriteNode(color=BUTTON_COLOUR, alpha=BUTTON_ALPHA, size=(JOYSTICK_SIZE / 4, JOYSTICK_SIZE / 4))
+		
+		self.draw_room()
 		
 		'''
 		# Create buttons
@@ -209,88 +229,56 @@ class DungeonGame (Scene):
 		if x < self.size.w / JOYSTICK_AREA and y < self.size.h:
 			self.usingJoystick = False
 			
-	def draw_floor(self):
-		# Create an empty Node to contain floor SpriteNodes
-		self.floors = Node(parent=self)
+	def draw_tile(self, Tile, TileFacing, image, x, y):
+		if Tile == Tile.TILE_BASE:
+			floor = SpriteNode(texture=image, size=(TILE_SIZE, TILE_SIZE), position=(x, y))
+			floor.rotation = TileFacing / 100
+			self.add_child(floor)
+			self.floors.append(floor)
+		elif Tile == Tile.TILE_WALL_SIDE:
+			wallSide = SpriteNode(texture=image, size=(TILE_SIZE, TILE_SIZE), position=(x, y))
+			wallSide.rotation = TileFacing / 100
+			self.add_child(wallSide)
+			self.walls.append(wallSide)
+		else:
+			print("Invalid enum")
+	
+	def draw_room(self):
 		# Place floor
-		for x in range(int(self.size.w / TILE_SIZE)):
-			for y in range(int(self.size.h / TILE_SIZE)):
-				floor = SpriteNode(texture=FLOOR, position=(x * TILE_SIZE + TILE_SIZE / 2, y * TILE_SIZE + TILE_SIZE / 2))
-				self.floors.add_child(floor)
+		for x in range(FLOOR_W):
+			for y in range(FLOOR_H):
+				self.draw_tile(Tile.TILE_BASE, TileFacing.UP, FLOOR, (x * TILE_SIZE + TILE_SIZE / 2) + TILE_SIZE * FLOOR_X, (y * TILE_SIZE + TILE_SIZE / 2) + TILE_SIZE * FLOOR_Y)
 				y += 1
 			x += 1
-	
-	def draw_walls(self):
-		''' North wall '''
-		# Create an empty Node to contain north wall SpriteNodes
-		self.wallNorth = Node(parent=self)
-		self.wallsNorth = []
-		# Place north outer walls
-		for x in range(int(self.size.w / TILE_SIZE)):
-			wallSide = SpriteNode(texture=(WALL_SIDE))
-			wallSide.rotation = NORTH_ROTATION
-			wallSide.position = (TILE_SIZE * (x + 0.5), self.size.h - TILE_SIZE / 2)
-			self.wallNorth.add_child(wallSide)
-			self.wallsNorth.append(wallSide)
-			x += 1
-		
-		''' South wall '''
-		# Create an empty Node to contain south wall SpriteNodes
-		self.wallSouth = Node(parent=self)
-		# Place south walls
-		for x in range(int(self.size.w / TILE_SIZE)):
-			wallSide = SpriteNode(texture=(WALL_SIDE))
-			wallSide.position = (TILE_SIZE * (x + 0.5), TILE_SIZE / 2)
-			self.wallSouth.add_child(wallSide)
-			x += 1
-		
-		''' East wall '''
-		# Create an empty Node to contain east wall SpriteNodes
-		self.wallEast = Node(parent=self)
-		# Place east walls
-		for y in range(int(self.size.h / TILE_SIZE)):
-			wallSide = SpriteNode(texture=(WALL_SIDE))
-			wallSide.rotation = EAST_ROTATION
-			wallSide.position = (self.size.w - TILE_SIZE / 2, TILE_SIZE * (y + 0.5))
-			self.wallEast.add_child(wallSide)
-			y += 1
-		
-		''' West wall '''
-		# Create an empty Node to contain west wall SpriteNodes
-		self.wallWest = Node(parent=self)
-		# Place west walls
-		for y in range(int(self.size.h / TILE_SIZE)):
-			wallSide = SpriteNode(texture=(WALL_SIDE))
-			wallSide.rotation = WEST_ROTATION
-			wallSide.position = (TILE_SIZE / 2, TILE_SIZE * (y + 0.5))
-			self.wallWest.add_child(wallSide)
-			y += 1
 			
-		''' Corner walls '''
-		# Create an empty Node to contain corner wall SpriteNodes
-		self.wallCorners = Node(parent=self)
+		''' Place walls '''
+		# Top wall		
+		for x in range(FLOOR_W):
+			self.draw_tile(Tile.TILE_WALL_SIDE, TileFacing.DOWN, WALL_SIDE, (x * TILE_SIZE + TILE_SIZE / 2) + TILE_SIZE * (FLOOR_X), (TILE_SIZE * FLOOR_H + TILE_SIZE / 2) + TILE_SIZE * FLOOR_Y)
 		
-		# Bottom-left corner
-		wallCorner = SpriteNode(texture=WALL_CORNER)
-		wallCorner.position = (TILE_SIZE / 2, TILE_SIZE / 2)
-		self.wallCorners.add_child(wallCorner)
+		# Bottom wall	
+		for x in range(FLOOR_W):
+			self.draw_tile(Tile.TILE_WALL_SIDE, TileFacing.UP, WALL_SIDE, (x * TILE_SIZE + TILE_SIZE / 2) + TILE_SIZE * (FLOOR_X), (-TILE_SIZE + TILE_SIZE / 2) + TILE_SIZE * FLOOR_Y)
+			
+		# Left wall
+		for y in range(FLOOR_H):
+			self.draw_tile(Tile.TILE_WALL_SIDE, TileFacing.LEFT, WALL_SIDE, (-TILE_SIZE + TILE_SIZE / 2) + TILE_SIZE * FLOOR_X, (y * TILE_SIZE + TILE_SIZE / 2) + TILE_SIZE * (FLOOR_X + 5))
+			
+		# Right wall	
+		for y in range(FLOOR_H):
+			self.draw_tile(Tile.TILE_WALL_SIDE, TileFacing.RIGHT, WALL_SIDE, (TILE_SIZE + (FLOOR_W - 1) * TILE_SIZE + TILE_SIZE / 2) + TILE_SIZE * FLOOR_X, (y * TILE_SIZE + TILE_SIZE / 2) + TILE_SIZE * (FLOOR_X + 5))
 		
-		# Bottom-right corner
-		wallCorner = SpriteNode(texture=WALL_CORNER)
-		wallCorner.position = (self.size.w - TILE_SIZE / 2, TILE_SIZE / 2)
-		wallCorner.rotation = EAST_ROTATION
-		self.wallCorners.add_child(wallCorner)
+		# Top Left Corner Wall
+		self.draw_tile(Tile.TILE_BASE, TileFacing.LEFT, WALL_CORNER, (-TILE_SIZE + TILE_SIZE / 2) + TILE_SIZE * (FLOOR_X), TILE_SIZE * (FLOOR_Y + FLOOR_H) + TILE_SIZE / 2)
 		
-		# Top-left corner
-		wallCorner = SpriteNode(texture=WALL_CORNER)
-		wallCorner.position = (TILE_SIZE / 2, self.size.h - TILE_SIZE / 2)
-		wallCorner.rotation = EAST_ROTATION
-		self.wallCorners.add_child(wallCorner)
+		# Top Right Corner Wall
+		self.draw_tile(Tile.TILE_BASE, TileFacing.DOWN, WALL_CORNER, (-TILE_SIZE + TILE_SIZE / 2) + TILE_SIZE * (FLOOR_X + FLOOR_W + 1), TILE_SIZE * (FLOOR_Y + FLOOR_H) + TILE_SIZE / 2)
 		
-		# Top-right corner
-		wallCorner = SpriteNode(texture=WALL_CORNER)
-		wallCorner.position = (self.size.w - TILE_SIZE / 2, self.size.h - TILE_SIZE / 2)
-		self.wallCorners.add_child(wallCorner)
+		# Bottom Left Corner Wall
+		self.draw_tile(Tile.TILE_BASE, TileFacing.UP, WALL_CORNER, (-TILE_SIZE + TILE_SIZE / 2) + TILE_SIZE * (FLOOR_X), TILE_SIZE * (FLOOR_Y - 1) + TILE_SIZE / 2)
+		
+		# Bottom Right Corner Wall
+		self.draw_tile(Tile.TILE_BASE, TileFacing.RIGHT, WALL_CORNER, (-TILE_SIZE + TILE_SIZE / 2) + TILE_SIZE * (FLOOR_X + FLOOR_W + 1), TILE_SIZE * (FLOOR_Y - 1) + TILE_SIZE / 2)
 	
 	def draw_doors(self):
 		self.doors = Node(parent=self)
@@ -376,17 +364,15 @@ class DungeonGame (Scene):
 		if abs(self.xMove) == abs(self.yMove):
 			self.xVel += (math.sqrt(self.xMove**2 + self.yMove**2) / 2) * self.xMove
 			self.yVel += (math.sqrt(self.xMove**2 + self.yMove**2) / 2) * self.yMove
-		
 		else:
 			self.xVel += self.xMove
 			self.yVel += self.yMove
 			
 		
-		# Friction
-		if self.playerHitbox.intersects(self.floors.bbox):
-			self.xVel -= 0.1 * self.xVel
-			self.yVel -= 0.1 * self.yVel
-			
+		# Slows player down
+		self.xVel -= 0.1 * self.xVel
+		self.yVel -= 0.1 * self.yVel
+				
 		
 		# Set velocity to zero when going slow enough
 		if self.xVel < 0.1 and self.xVel > -0.1:
@@ -394,86 +380,31 @@ class DungeonGame (Scene):
 		
 		if self.yVel < 0.1 and self.yVel > -0.1:
 			self.yVel = 0
-			
-		
-		# Collision for north wall
-		if self.playerHitbox.y + self.playerHitbox.h > self.size.h - TILE_SIZE:
-			
-			if self.playerHitbox.x < 6.5 * TILE_SIZE:
-				self.player.position = (self.player.position.x, self.player.position.y - 1)
-				self.yVel = 0
-			
-			if self.playerHitbox.x > 8.5 * TILE_SIZE:
-				self.player.position = (self.player.position.x, self.player.position.y - 1)
-				self.yVel = 0
-			
-			if self.playerHitbox.x < 7 * TILE_SIZE:
-				self.player.position = (self.player.position.x + 1, self.player.position.y)
-				self.xVel = 0
-			
-			if self.playerHitbox.x > 8 * TILE_SIZE:
-				self.player.position = (self.player.position.x - 1, self.player.position.y)
-				self.xVel = 0
-			
-			
-		# Collision for south wall
-		if self.playerHitbox.y < TILE_SIZE:
-			
-			if self.playerHitbox.x < 6.5 * TILE_SIZE:
-				self.player.position = (self.player.position.x, self.player.position.y + 1)
-				self.yVel = 0
-			
-			if self.playerHitbox.x > 8.5 * TILE_SIZE:
-				self.player.position = (self.player.position.x, self.player.position.y + 1)
-				self.yVel = 0
-			
-			if self.playerHitbox.x < 7 * TILE_SIZE:
-				self.player.position = (self.player.position.x + 1, self.player.position.y)
-				self.xVel = 0
-			
-			if self.playerHitbox.x > 8 * TILE_SIZE:
-				self.player.position = (self.player.position.x - 1, self.player.position.y)
-				self.xVel = 0
 		
 		
-		# Collision for east wall
-		if self.playerHitbox.x + self.playerHitbox.w > self.size.w - TILE_SIZE:
-			
-			if self.playerHitbox.y < 4.5 * TILE_SIZE:
-				self.player.position = (self.player.position.x - 1, self.player.position.y)
-				self.xVel = 0
-			
-			if self.playerHitbox.y > 6.5 * TILE_SIZE:
-				self.player.position = (self.player.position.x - 1, self.player.position.y)
-				self.xVel = 0
-			
-			if self.playerHitbox.y < 5 * TILE_SIZE:
-				self.player.position = (self.player.position.x, self.player.position.y + 1)
-				self.yVel = 0
-			
-			if self.playerHitbox.y > 6 * TILE_SIZE:
-				self.player.position = (self.player.position.x, self.player.position.y - 1)
-				self.yVel = 0
-		
-		
-		# Collision for west wall
-		if self.playerHitbox.x < TILE_SIZE:
-			
-			if self.playerHitbox.y < 4.5 * TILE_SIZE:
-				self.player.position = (self.player.position.x + 1, self.player.position.y)
-				self.xVel = 0
-			
-			if self.playerHitbox.y > 6.5 * TILE_SIZE:
-				self.player.position = (self.player.position.x + 1, self.player.position.y)
-				self.xVel = 0
-			
-			if self.playerHitbox.y < 5 * TILE_SIZE:
-				self.player.position = (self.player.position.x, self.player.position.y + 1)
-				self.yVel = 0
-			
-			if self.playerHitbox.y > 6 * TILE_SIZE:
-				self.player.position = (self.player.position.x, self.player.position.y - 1)
-				self.yVel = 0
+		# Wall collision
+		for w in self.walls:
+			if self.playerHitbox.intersects(w.bbox):
+				
+				# Collision on down facing walls
+				if w.rotation == TileFacing.DOWN / 100:
+					self.move_player(0, -1)
+					self.yVel = 0
+				
+				# Collision on top facing walls
+				if w.rotation == TileFacing.UP / 100:
+					self.move_player(0, 1)
+					self.yVel = 0
+				
+				# Collision on right facing walls
+				if w.rotation == TileFacing.RIGHT / 100:
+					self.move_player(-1, 0)
+					self.xVel = 0
+					
+				# Collision on left facing walls
+				if w.rotation == TileFacing.LEFT / 100:
+					self.move_player(1, 0)
+					self.xVel = 0
 	
 	def player_input(self):
 		# Calculates the distance from the area touched and the origin (self.joystickKnob.position.*)
@@ -498,93 +429,16 @@ class DungeonGame (Scene):
 			self.yMove = 0
 		
 	def player_texture(self):
+		self.player.z_position = self.player.position.y
+		
 		# Flip image when going left and right
 		if self.xVel > 0:
 			self.player.x_scale = 1
 		elif self.xVel < 0:
 			self.player.x_scale = -1
-		
-		# Determine the direction of the player		
-		if abs(self.xVel) > abs(self.yVel):
-			self.playerDirection = "side"
-		elif self.yVel > 0:
-			self.playerDirection = "up"
-		elif  self.yVel < 0:
-			self.playerDirection = "down"
-		
-		''' Attacking animation '''
-		if self.playerAttacking == True:
-			
-			# Play attack animation for appropriate direction
-			
-			if self.playerDirection == "side":
 					
-				if self.animCounter < len(PLAYER0_RIGHT_ATTACK[int(self.playerAttackVar)]):
-					self.player.texture = Texture(PLAYER0_RIGHT_ATTACK[int(self.playerAttackVar)][int(self.animCounter)])
-					self.animCounter += ANIM_SPEED
-			
-			elif self.playerDirection == "up":
-				
-				if self.animCounter < len(PLAYER0_UP_ATTACK[int(self.playerAttackVar)]):
-					self.player.texture = Texture(PLAYER0_UP_ATTACK[int(self.playerAttackVar)][int(self.animCounter)])
-					self.animCounter += ANIM_SPEED
-			
-			elif self.playerDirection == "down":
-				
-				if self.animCounter < len(PLAYER0_DOWN_ATTACK[int(self.playerAttackVar)]):
-					self.player.texture = Texture(PLAYER0_DOWN_ATTACK[int(self.playerAttackVar)][int(self.animCounter)])
-					self.animCounter += ANIM_SPEED
-			
-			# ... else reset the variables		
-			if self.animCounter >= len(PLAYER0_RIGHT_ATTACK[int(self.playerAttackVar)]):
-				self.playerAttacking = False
-				self.animCounter = -1
-		
-		''' Player idle animation '''
-		if self.playerAttacking == False:
-			
-			# If the animCounter is too big for PLAYER0_UP_IDLE, reset animCounter
-			if self.animCounter >= len(PLAYER0_UP_IDLE):
-					self.animCounter = 0
-			
-			if self.xVel == 0 and self.yVel == 0:
-				
-				if self.playerDirection == "up":
-					
-					if self.animCounter < len(PLAYER0_UP_IDLE):
-						self.player.texture = Texture(PLAYER0_UP_IDLE[int(self.animCounter)])
-						self.animCounter += ANIM_SPEED
-				
-				elif self.playerDirection == "down":
-					
-					if self.animCounter < len(PLAYER0_DOWN_IDLE):
-						self.player.texture = Texture(PLAYER0_DOWN_IDLE[int(self.animCounter)])
-						self.animCounter += ANIM_SPEED
-				
-				elif self.playerDirection == "side":
-					
-					if self.animCounter < len(PLAYER0_RIGHT_IDLE):
-						self.player.texture = Texture(PLAYER0_RIGHT_IDLE[int(self.animCounter)])
-						self.animCounter += ANIM_SPEED
-						
-			''' Player movement animation '''
-			if self.playerDirection == "side" and self.xVel != 0:
-				
-				if self.animCounter < len(PLAYER0_RIGHT_MOVE):
-					self.player.texture = Texture(PLAYER0_RIGHT_MOVE[int(self.animCounter)])
-					self.animCounter += ANIM_SPEED
-			
-			elif self.playerDirection == "up" and self.yVel != 0:
-				
-				if self.animCounter < len(PLAYER0_UP_MOVE):
-					self.player.texture = Texture(PLAYER0_UP_MOVE[int(self.animCounter)])
-					self.animCounter += ANIM_SPEED
-			
-			elif self.playerDirection == "down" and self.yVel != 0:
-				
-				if self.animCounter < len(PLAYER0_DOWN_MOVE):
-					self.player.texture = Texture(PLAYER0_DOWN_MOVE[int(self.animCounter)])
-					self.animCounter += ANIM_SPEED
+	def move_player(self, x, y):
+			self.player.position = (self.player.position.x + x, self.player.position.y + y)
 
 if __name__ == '__main__':
 	run(DungeonGame(), show_fps=True, orientation=LANDSCAPE)
